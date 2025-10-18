@@ -63,11 +63,11 @@ class MFModel(BaseModel):
         self.model.fit(R.T)
 
     def recommend(
-    self,
-    user_id: int | None = None,
-    user_vector: np.ndarray | None = None,
-    top_k: int = 10
-) -> List[Tuple[int, float]]:
+        self,
+        user_id: int | None = None,
+        user_vector: np.ndarray | None = None,
+        top_k: int = 10
+    ) -> List[Tuple[int, float]]:
     """
     Recommend items for a known or temporary user.
 
@@ -132,3 +132,4 @@ class MFModel(BaseModel):
         b = V.T @ ratings
         user_vec = np.linalg.solve(A, b)
         return user_vec
+        
