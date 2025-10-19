@@ -1,6 +1,6 @@
 # recommender/models/mf_model.py
 
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 from scipy.sparse import csr_matrix
 from implicit.als import AlternatingLeastSquares
 from .base_model import BaseModel
@@ -64,39 +64,39 @@ class MFModel(BaseModel):
 
     def recommend(
         self,
-        user_id: int | None = None,
-        user_vector: np.ndarray | None = None,
+        user_id: Optional[int] = None,
+        user_vector: Optional[np.ndarray] = None,
         top_k: int = 10
     ) -> List[Tuple[int, float]]:
-    """
-    Recommend items for a known or temporary user.
+        """
+        Recommend items for a known or temporary user.
 
-    Args:
-        user_id: Known user row index (for existing users).
-        user_vector: Computed embedding (for new users).
-        top_k: Number of recommendations.
+        Args:
+            user_id: Known user row index (for existing users).
+            user_vector: Computed embedding (for new users).
+            top_k: Number of recommendations.
 
-    Returns:
-        List of (artist_id, score) tuples.
-    """
-    if self.R is None:
-        raise ValueError("Model must be trained before recommending.")
+        Returns:
+            List of (artist_id, score) tuples.
+        """
+        if self.R is None:
+            raise ValueError("Model must be trained before recommending.")
 
-    if user_vector is not None:
-        # Cold-start user (fold-in)
-        scores = self.model.item_factors @ user_vector
-        top_items = np.argsort(scores)[::-1][:top_k]
-        inv_item_map = {v: k for k, v in self.item_map.items()}
-        return [(inv_item_map[i], float(scores[i])) for i in top_items]
+        if user_vector is not None:
+            # Cold-start user (fold-in)
+            scores = self.model.item_factors @ user_vector
+            top_items = np.argsort(scores)[::-1][:top_k]
+            inv_item_map = {v: k for k, v in self.item_map.items()}
+            return [(inv_item_map[i], float(scores[i])) for i in top_items]
 
-    elif user_id is not None:
-        # Existing user
-        recs = self.model.recommend(user_id, self.R, N=top_k)
-        inv_item_map = {v: k for k, v in self.item_map.items()}
-        return [(inv_item_map[i], float(s)) for i, s in recs]
+        elif user_id is not None:
+            # Existing user
+            recs = self.model.recommend(user_id, self.R, N=top_k)
+            inv_item_map = {v: k for k, v in self.item_map.items()}
+            return [(inv_item_map[i], float(s)) for i, s in recs]
 
-    else:
-        raise ValueError("Either user_id or user_vector must be provided.")
+        else:
+            raise ValueError("Either user_id or user_vector must be provided.")
 
 
     def get_user_vector(
@@ -132,4 +132,3 @@ class MFModel(BaseModel):
         b = V.T @ ratings
         user_vec = np.linalg.solve(A, b)
         return user_vec
-        

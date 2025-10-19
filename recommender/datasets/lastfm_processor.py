@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from typing import Dict, Any, Tuple
 from .base_processor import BaseDataset
+import chardet
 
 
 class LastFMDataset(BaseDataset):
@@ -35,7 +36,16 @@ class LastFMDataset(BaseDataset):
             path = os.path.join(self.data_dir, f"{filename}.dat")
             if not os.path.exists(path):
                 raise FileNotFoundError(f"Missing dataset file: {path}")
-            return pd.read_csv(path, sep="\t")
+
+            # Try UTF-8 first, then auto-detect fallback encoding
+            try:
+                return pd.read_csv(path, sep="\t", encoding="utf-8")
+            except UnicodeDecodeError:
+                with open(path, "rb") as f:
+                    detected = chardet.detect(f.read())
+                encoding = detected["encoding"] or "latin1"
+                print(f"[WARN] {filename}.dat not UTF-8, using detected encoding: {encoding}")
+                return pd.read_csv(path, sep="\t", encoding=encoding)
 
         # Required files
         self.data["artists"] = load_file("artists")
